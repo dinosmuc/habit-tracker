@@ -1,25 +1,25 @@
-[project]
+[tool.poetry]
 name = "habittracker"
 version = "0.1.0"
 description = "A Flask and JavaScript application for tracking daily and weekly habits."
-authors = [
-    {name = "Dino Smuc dino@gmail.com"}
-]
-license = {text = "MIT"}
+authors = ["Dino Smuc <dino@gmail.com>"]
+license = "MIT"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "flask (>=3.1.2,<4.0.0)",
-    "sqlalchemy (>=2.0.43,<3.0.0)",
-    "alembic (>=1.16.5,<2.0.0)",
-    "pandas (>=2.3.2,<3.0.0)"
-]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.dependencies]
+python = ">=3.10"
+flask = ">=3.1.2,<4.0.0"
+sqlalchemy = ">=2.0.43,<3.0.0"
+alembic = ">=1.16.5,<2.0.0"
+pandas = ">=2.3.2,<3.0.0"
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^4.3.0"
+pytest = "^8.2.2"
+black = "^24.4.2"
+ruff = "^0.4.5"
+pre-commit = "^3.7.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
