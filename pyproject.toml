@@ -1,0 +1,21 @@
+[project]
+name = "habittracker"
+version = "0.1.0"
+description = "A Flask and JavaScript application for tracking daily and weekly habits."
+authors = [
+    {name = "Dino Smuc dino@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask (>=3.1.2,<4.0.0)",
+    "sqlalchemy (>=2.0.43,<3.0.0)",
+    "alembic (>=1.16.5,<2.0.0)",
+    "pandas (>=2.3.2,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
