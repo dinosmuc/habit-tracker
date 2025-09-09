@@ -1,0 +1,37 @@
+[project]
+name = "habittracker"
+version = "0.1.0"
+description = "A habit tracking app with a simple web interface and backend API, built to create, complete, and track habits."
+authors = [
+    {name = "Dino Smuc",email = "dino.smuc@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask (>=3.1.2,<4.0.0)",
+    "sqlalchemy (>=2.0.43,<3.0.0)",
+    "alembic (>=1.16.5,<2.0.0)",
+    "pandas (>=2.3.2,<3.0.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+ruff = "^0.12.12"
+black = "^25.1.0"
+pre-commit = "^4.3.0"
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
