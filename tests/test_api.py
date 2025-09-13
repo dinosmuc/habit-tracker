@@ -1,20 +1,3 @@
-import pytest
-
-from habittracker.app import create_app
-
-
-@pytest.fixture
-def client():
-    """Configures the app to use a temporary in-memory database for testing."""
-    app = create_app(db_url="sqlite:///:memory:")
-    app.config["TESTING"] = True
-
-    with app.test_client() as client:
-        with app.app_context():
-            pass
-        yield client
-
-
 def test_get_all_habits(client):
     """Test that the API returns all habits successfully."""
     response = client.get("/api/habits")
