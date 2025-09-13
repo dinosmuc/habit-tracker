@@ -1,6 +1,6 @@
 from flask import Flask
 
-from habittracker import api, database, models
+from habittracker import api, database
 
 
 def create_app(db_url="sqlite:///habittracker.db"):
@@ -9,9 +9,6 @@ def create_app(db_url="sqlite:///habittracker.db"):
 
     # Configure the database engine with the provided URL
     database.engine.url = db_url
-
-    # Create database tables if they don't exist
-    models.Base.metadata.create_all(bind=database.engine)
 
     # Register the teardown function to close DB sessions
     app.teardown_appcontext(database.close_db)
