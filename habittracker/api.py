@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from .database import get_db
-from .serializers import serialize_habit
+from .serializers import serialize_completion, serialize_habit
 from .services import HabitService
 
 # Create a Blueprint object to organize routes.
@@ -45,3 +45,29 @@ def create_habit():
         return jsonify(serialize_habit(new_habit)), 201
     except ValueError:
         return jsonify({"error": "Invalid value for periodicity"}), 400
+
+
+@bp.route("/habits/<int:habit_id>", methods=["DELETE"])
+def delete_habit(habit_id: int):
+    """Endpoint to delete a habit."""
+    db_session = get_db()
+    habit_service = HabitService(db_session)
+    deleted_habit = habit_service.delete_habit(habit_id)
+
+    if not deleted_habit:
+        return jsonify({"error": "Habit not found"}), 404
+
+    return jsonify({"message": "Habit deleted successfully"}), 200
+
+
+@bp.route("/habits/<int:habit_id>/checkoff", methods=["POST"])
+def check_off_habit(habit_id: int):
+    """Endpoint for marking a habit as complete."""
+    db_session = get_db()
+    habit_service = HabitService(db_session)
+    completion = habit_service.check_off_habit(habit_id)
+
+    if not completion:
+        return jsonify({"error": "Habit not found"}), 404
+
+    return jsonify(serialize_completion(completion)), 201
