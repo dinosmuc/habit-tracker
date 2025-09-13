@@ -1,5 +1,6 @@
 import pytest
-from habit_tracker.app import create_app
+
+from habittracker.app import create_app
 
 
 @pytest.fixture
