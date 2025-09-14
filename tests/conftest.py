@@ -14,6 +14,22 @@ def app():
 
 
 @pytest.fixture(scope="function")
+def db_session(app):
+    """Create a database session for testing."""
+    with app.app_context():
+        # Create all tables using the app's configured engine
+        Base.metadata.create_all(bind=database.engine)
+
+        session = database.SessionLocal()
+        yield session
+
+        session.rollback()  # Rollback any changes
+        session.close()
+        # Drop all tables after the test is done
+        Base.metadata.drop_all(bind=database.engine)
+
+
+@pytest.fixture(scope="function")
 def client(app):
     """
     A test client for the app. This fixture also handles creating
