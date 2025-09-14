@@ -1,5 +1,5 @@
 from flask import Flask
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 
 from habittracker import api, database
 
@@ -12,6 +12,14 @@ def create_app(db_url="sqlite:///habittracker.db"):
     if database.engine:
         database.engine.dispose()
     database.engine = create_engine(db_url, connect_args={"check_same_thread": False})
+
+    # Enable foreign key constraints for SQLite
+    @event.listens_for(database.engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        if "sqlite" in db_url:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
     # Rebind the SessionLocal to the new, correct engine.
     database.SessionLocal.configure(bind=database.engine)
