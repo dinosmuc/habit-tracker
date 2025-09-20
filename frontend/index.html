@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Habit Tracker</h1>
+        </header>
+
+        <main>
+            <section class="add-habit">
+                <h2>Add New Habit</h2>
+                <form id="habit-form">
+                    <input type="text" id="habit-name" placeholder="Enter habit name" required>
+                    <select id="habit-periodicity" required>
+                        <option value="">Select frequency</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                    </select>
+                    <button type="submit">Add Habit</button>
+                </form>
+            </section>
+
+            <section class="habits-list">
+                <h2>Your Habits</h2>
+                <div id="habits-container">
+                    <p class="loading">Loading habits...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
