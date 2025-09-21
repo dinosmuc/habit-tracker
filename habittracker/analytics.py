@@ -60,7 +60,7 @@ class AnalyticsService:
         streaks = df.groupby("streak_id").size()
         longest = int(streaks.max())
 
-        today = today or pd.Timestamp.utcnow()
+        today = today or pd.Timestamp.utcnow().tz_localize(None).tz_localize(None)
         last_date = df["completed_at"].max()
         current = int(streaks.iloc[-1]) if (today - last_date).days <= period else 0
         return {"longest_streak": longest, "current_streak": current}
@@ -69,7 +69,7 @@ class AnalyticsService:
         self, today: pd.Timestamp | None = None
     ) -> pd.DataFrame:
         """Return habits with lowest completion percentage over last 30 days."""
-        today = today or pd.Timestamp.utcnow()
+        today = today or pd.Timestamp.utcnow().tz_localize(None)
         start = today - pd.Timedelta(days=30)
 
         habits = self._habits_df()
@@ -99,7 +99,7 @@ class AnalyticsService:
         self, today: pd.Timestamp | None = None
     ) -> pd.DataFrame:
         """Calculate overall completion rate for each habit."""
-        today = today or pd.Timestamp.utcnow()
+        today = today or pd.Timestamp.utcnow().tz_localize(None)
         habits = self._habits_df()
         completions = self._completions_df()
 
