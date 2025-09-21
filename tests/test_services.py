@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from habittracker.models import Completion, Habit, Periodicity
+from habittracker.models import Completion, Habit, Periodicity, UserPreferences
 from habittracker.services import HabitService
 
 
@@ -174,34 +174,252 @@ class TestHabitService:
         assert completion is None
 
     def test_check_off_habit_multiple_times(self, db_session):
-        """Test checking off the same habit multiple times."""
+        """Test that checking off the same habit multiple times in same period
+        is prevented."""
         habit = Habit(name="Multiple Checkoffs", periodicity=Periodicity.DAILY)
         db_session.add(habit)
         db_session.commit()
 
         service = HabitService(db_session)
 
-        # Check off multiple times
+        # First completion should succeed
         completion1 = service.check_off_habit(habit.id)
+        assert completion1 is not None
+
+        # Subsequent completions same day should be prevented
         completion2 = service.check_off_habit(habit.id)
         completion3 = service.check_off_habit(habit.id)
+        assert completion2 is None
+        assert completion3 is None
 
-        assert completion1 is not None
-        assert completion2 is not None
-        assert completion3 is not None
+        # Verify only one completion exists
+        completions = (
+            db_session.query(Completion).filter(Completion.habit_id == habit.id).all()
+        )
+        assert len(completions) == 1
+        assert completions[0].habit_id == habit.id
 
-        # All should have different IDs
-        assert completion1.id != completion2.id
-        assert completion2.id != completion3.id
+    def test_update_habit_name_only(self, db_session):
+        """Test updating only the habit name."""
+        habit = Habit(name="Old Name", periodicity=Periodicity.DAILY)
+        db_session.add(habit)
+        db_session.commit()
 
-        # All should belong to the same habit
-        assert completion1.habit_id == habit.id
-        assert completion2.habit_id == habit.id
-        assert completion3.habit_id == habit.id
+        service = HabitService(db_session)
+        updated_habit = service.update_habit(habit.id, name="New Name")
 
-        # Verify all were persisted
-        completions = db_session.query(Completion).filter_by(habit_id=habit.id).all()
-        assert len(completions) == 3
+        assert updated_habit is not None
+        assert updated_habit.name == "New Name"
+        assert updated_habit.periodicity == Periodicity.DAILY
+        assert updated_habit.id == habit.id
+
+    def test_update_habit_periodicity_only(self, db_session):
+        """Test updating only the habit periodicity."""
+        habit = Habit(name="Test Habit", periodicity=Periodicity.DAILY)
+        db_session.add(habit)
+        db_session.commit()
+
+        service = HabitService(db_session)
+        updated_habit = service.update_habit(habit.id, periodicity="weekly")
+
+        assert updated_habit is not None
+        assert updated_habit.name == "Test Habit"
+        assert updated_habit.periodicity == Periodicity.WEEKLY
+        assert updated_habit.id == habit.id
+
+    def test_update_habit_both_fields(self, db_session):
+        """Test updating both name and periodicity."""
+        habit = Habit(name="Old Name", periodicity=Periodicity.DAILY)
+        db_session.add(habit)
+        db_session.commit()
+
+        service = HabitService(db_session)
+        updated_habit = service.update_habit(
+            habit.id, name="New Name", periodicity="weekly"
+        )
+
+        assert updated_habit is not None
+        assert updated_habit.name == "New Name"
+        assert updated_habit.periodicity == Periodicity.WEEKLY
+        assert updated_habit.id == habit.id
+
+    def test_update_nonexistent_habit(self, db_session):
+        """Test updating a habit that doesn't exist."""
+        service = HabitService(db_session)
+        updated_habit = service.update_habit(999, name="New Name")
+
+        assert updated_habit is None
+
+    def test_update_habit_invalid_periodicity(self, db_session):
+        """Test updating habit with invalid periodicity."""
+        habit = Habit(name="Test Habit", periodicity=Periodicity.DAILY)
+        db_session.add(habit)
+        db_session.commit()
+
+        service = HabitService(db_session)
+
+        # Should raise ValueError for invalid periodicity
+        with pytest.raises(ValueError):
+            service.update_habit(habit.id, periodicity="invalid")
+
+    def test_is_habit_completed_today_daily_not_completed(self, db_session):
+        """Test is_habit_completed_today for daily habit that is not completed."""
+        habit = Habit(name="Test Habit", periodicity=Periodicity.DAILY)
+        db_session.add(habit)
+        db_session.commit()
+
+        service = HabitService(db_session)
+        is_completed = service.is_habit_completed_today(habit.id)
+
+        assert is_completed is False
+
+    def test_is_habit_completed_today_daily_completed(self, db_session):
+        """Test is_habit_completed_today for daily habit that is completed."""
+        habit = Habit(name="Test Habit", periodicity=Periodicity.DAILY)
+        db_session.add(habit)
+        db_session.commit()
+
+        # Add completion for today
+        from datetime import date, datetime
+
+        today = date.today()
+        completion = Completion(
+            habit_id=habit.id, completed_at=datetime.combine(today, datetime.min.time())
+        )
+        db_session.add(completion)
+        db_session.commit()
+
+        service = HabitService(db_session)
+        is_completed = service.is_habit_completed_today(habit.id)
+
+        assert is_completed is True
+
+    def test_is_habit_completed_today_weekly_not_completed(self, db_session):
+        """Test is_habit_completed_today for weekly habit that is not completed."""
+        habit = Habit(name="Weekly Habit", periodicity=Periodicity.WEEKLY)
+        db_session.add(habit)
+        db_session.commit()
+
+        service = HabitService(db_session)
+        is_completed = service.is_habit_completed_today(habit.id)
+
+        assert is_completed is False
+
+    def test_is_habit_completed_today_weekly_completed(self, db_session):
+        """Test is_habit_completed_today for weekly habit that is
+        completed this week."""
+        habit = Habit(name="Weekly Habit", periodicity=Periodicity.WEEKLY)
+        db_session.add(habit)
+        db_session.commit()
+
+        # Add completion for this week (yesterday)
+        from datetime import date, datetime, timedelta
+
+        yesterday = date.today() - timedelta(days=1)
+        completion = Completion(
+            habit_id=habit.id,
+            completed_at=datetime.combine(yesterday, datetime.min.time()),
+        )
+        db_session.add(completion)
+        db_session.commit()
+
+        service = HabitService(db_session)
+        is_completed = service.is_habit_completed_today(habit.id)
+
+        assert is_completed is True
+
+    def test_is_habit_completed_today_nonexistent_habit(self, db_session):
+        """Test is_habit_completed_today for non-existent habit."""
+        service = HabitService(db_session)
+        is_completed = service.is_habit_completed_today(999)
+
+        assert is_completed is False
+
+    def test_get_user_preferences_creates_default(self, db_session):
+        """Test that get_user_preferences creates default preferences
+        when none exist."""
+        service = HabitService(db_session)
+
+        # Verify no preferences exist
+        existing = db_session.query(UserPreferences).first()
+        assert existing is None
+
+        # Get preferences (should create defaults)
+        preferences = service.get_user_preferences()
+
+        assert preferences is not None
+        assert preferences.struggle_threshold == 0.75
+        assert preferences.show_bottom_percent == 0.25
+        assert preferences.id is not None
+
+        # Verify it was persisted
+        db_preferences = db_session.query(UserPreferences).first()
+        assert db_preferences is not None
+        assert db_preferences.id == preferences.id
+
+    def test_get_user_preferences_returns_existing(self, db_session):
+        """Test that get_user_preferences returns existing preferences."""
+        # Create preferences manually
+        existing_prefs = UserPreferences(
+            struggle_threshold=0.8, show_bottom_percent=0.3
+        )
+        db_session.add(existing_prefs)
+        db_session.commit()
+
+        service = HabitService(db_session)
+        preferences = service.get_user_preferences()
+
+        assert preferences.id == existing_prefs.id
+        assert preferences.struggle_threshold == 0.8
+        assert preferences.show_bottom_percent == 0.3
+
+    def test_update_user_preferences_partial_update(self, db_session):
+        """Test updating only some preference fields."""
+        service = HabitService(db_session)
+
+        # Create initial preferences
+        original = service.get_user_preferences()
+        original_threshold = original.struggle_threshold
+
+        # Update only show_bottom_percent
+        updated = service.update_user_preferences(show_bottom_percent=0.5)
+
+        assert updated.id == original.id
+        assert updated.struggle_threshold == original_threshold  # Unchanged
+        assert updated.show_bottom_percent == 0.5  # Updated
+
+    def test_update_user_preferences_full_update(self, db_session):
+        """Test updating all preference fields."""
+        service = HabitService(db_session)
+
+        updated = service.update_user_preferences(
+            struggle_threshold=0.9, show_bottom_percent=0.1
+        )
+
+        assert updated.struggle_threshold == 0.9
+        assert updated.show_bottom_percent == 0.1
+
+    def test_update_user_preferences_validation_clamping(self, db_session):
+        """Test that preference values are clamped to valid ranges."""
+        service = HabitService(db_session)
+
+        # Test clamping upper bounds
+        updated = service.update_user_preferences(
+            struggle_threshold=1.5,  # Should clamp to 1.0
+            show_bottom_percent=2.0,  # Should clamp to 1.0
+        )
+
+        assert updated.struggle_threshold == 1.0
+        assert updated.show_bottom_percent == 1.0
+
+        # Test clamping lower bounds
+        updated = service.update_user_preferences(
+            struggle_threshold=0.05,  # Should clamp to 0.1
+            show_bottom_percent=-0.1,  # Should clamp to 0.1
+        )
+
+        assert updated.struggle_threshold == 0.1
+        assert updated.show_bottom_percent == 0.1
 
 
 class TestHabitServiceIntegration:
@@ -219,11 +437,13 @@ class TestHabitServiceIntegration:
         found_habit = service.get_habit_by_id(habit.id)
         assert found_habit.name == "Workout"
 
-        # Check it off a few times
+        # Check it off once (should succeed)
         completion1 = service.check_off_habit(habit.id)
-        completion2 = service.check_off_habit(habit.id)
         assert completion1 is not None
-        assert completion2 is not None
+
+        # Check it off again same day (should fail)
+        completion2 = service.check_off_habit(habit.id)
+        assert completion2 is None
 
         # Verify it appears in all habits
         all_habits = service.get_all_habits()

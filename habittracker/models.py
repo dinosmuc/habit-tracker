@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -37,3 +37,17 @@ class Completion(Base):
     habit_id = Column(Integer, ForeignKey("habits.id"), nullable=False)
 
     habit = relationship("Habit", back_populates="completions")
+
+
+class UserPreferences(Base):
+    """Stores user preferences for analytics and other settings."""
+
+    __tablename__ = "user_preferences"
+
+    id = Column(Integer, primary_key=True)
+    struggle_threshold = Column(Float, default=0.75, nullable=False)
+    show_bottom_percent = Column(Float, default=0.25, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(
+        DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow
+    )

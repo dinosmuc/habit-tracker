@@ -66,13 +66,19 @@ class AnalyticsService:
         return {"longest_streak": longest, "current_streak": current}
 
     def identify_struggled_habits(
-        self, today: pd.Timestamp | None = None
+        self,
+        today: pd.Timestamp | None = None,
+        threshold: float = 0.75,
+        quartile: float = 0.25,
     ) -> pd.DataFrame:
-        """Return habits with lowest completion percentage over last 30 days."""
+        """Return habits in bottom quartile below the specified threshold."""
         today = today or pd.Timestamp.utcnow().tz_localize(None)
         start = today - pd.Timedelta(days=30)
 
         habits = self._habits_df()
+        if habits.empty:
+            return pd.DataFrame(columns=["id", "name", "completion_rate"])
+
         completions = pd.read_sql(
             self.db.query(models.Completion)
             .filter(models.Completion.completed_at >= start)
@@ -89,10 +95,20 @@ class AnalyticsService:
         ).fillna({"completed": 0})
         merged["period_days"] = merged["periodicity"].map({"DAILY": 1, "WEEKLY": 7})
         merged["expected"] = 30 / merged["period_days"]
-        merged["completion_rate"] = merged["completed"] / merged["expected"]
-        min_rate = merged["completion_rate"].min()
-        return merged.loc[
-            merged["completion_rate"] == min_rate, ["id", "name", "completion_rate"]
+        merged["completion_rate"] = (merged["completed"] / merged["expected"]).clip(
+            upper=1.0
+        )
+
+        # Only consider habits below threshold
+        bottom_performers = merged[merged["completion_rate"] < threshold]
+
+        if bottom_performers.empty:
+            return pd.DataFrame(columns=["id", "name", "completion_rate"])
+
+        # Return specified portion of underperforming habits (minimum 1)
+        portion_size = max(1, int(len(bottom_performers) * quartile))
+        return bottom_performers.nsmallest(portion_size, "completion_rate")[
+            ["id", "name", "completion_rate"]
         ]
 
     def overall_completion_rate(
@@ -114,7 +130,9 @@ class AnalyticsService:
         merged["expected"] = (merged["total_days"] / merged["period_days"]).floordiv(
             1
         ) + 1
-        merged["completion_rate"] = merged["completed"] / merged["expected"]
+        merged["completion_rate"] = (merged["completed"] / merged["expected"]).clip(
+            upper=1.0
+        )
         return merged[["id", "name", "completion_rate"]]
 
     def best_and_worst_day(self, habit_id: int) -> dict:
