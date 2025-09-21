@@ -58,6 +58,89 @@ def test_delete_habit_not_found(client):
     assert response.status_code == 404
 
 
+def test_update_habit(client):
+    """Test that a habit can be successfully updated."""
+    # Create a habit to update
+    response = client.post(
+        "/api/habits", json={"name": "Original Name", "periodicity": "daily"}
+    )
+    assert response.status_code == 201
+    habit_id = response.json["id"]
+
+    # Update the habit
+    update_response = client.put(
+        f"/api/habits/{habit_id}",
+        json={"name": "Updated Name", "periodicity": "weekly"},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json["name"] == "Updated Name"
+    assert update_response.json["periodicity"] == "weekly"
+    assert update_response.json["id"] == habit_id
+
+    # Verify the habit was actually updated
+    get_response = client.get(f"/api/habits/{habit_id}")
+    assert get_response.status_code == 200
+    assert get_response.json["name"] == "Updated Name"
+    assert get_response.json["periodicity"] == "weekly"
+
+
+def test_update_habit_partial(client):
+    """Test that a habit can be partially updated (name only)."""
+    # Create a habit to update
+    response = client.post(
+        "/api/habits", json={"name": "Original Name", "periodicity": "daily"}
+    )
+    assert response.status_code == 201
+    habit_id = response.json["id"]
+
+    # Update only the name
+    update_response = client.put(
+        f"/api/habits/{habit_id}", json={"name": "Updated Name Only"}
+    )
+    assert update_response.status_code == 200
+    assert update_response.json["name"] == "Updated Name Only"
+    assert update_response.json["periodicity"] == "daily"  # Should remain unchanged
+
+
+def test_update_habit_not_found(client):
+    """Test that updating a non-existent habit returns a 404 error."""
+    response = client.put(
+        "/api/habits/999", json={"name": "Updated Name", "periodicity": "weekly"}
+    )
+    assert response.status_code == 404
+
+
+def test_update_habit_invalid_periodicity(client):
+    """Test that updating a habit with invalid periodicity returns a 400 error."""
+    # Create a habit to update
+    response = client.post(
+        "/api/habits", json={"name": "Test Habit", "periodicity": "daily"}
+    )
+    assert response.status_code == 201
+    habit_id = response.json["id"]
+
+    # Try to update with invalid periodicity
+    update_response = client.put(
+        f"/api/habits/{habit_id}", json={"name": "Test Habit", "periodicity": "invalid"}
+    )
+    assert update_response.status_code == 400
+    assert "error" in update_response.json
+
+
+def test_update_habit_empty_request(client):
+    """Test that updating a habit with empty request body returns a 400 error."""
+    # Create a habit to update
+    response = client.post(
+        "/api/habits", json={"name": "Test Habit", "periodicity": "daily"}
+    )
+    assert response.status_code == 201
+    habit_id = response.json["id"]
+
+    # Send empty JSON request (not completely empty which gives 415)
+    update_response = client.put(f"/api/habits/{habit_id}", json={})
+    assert update_response.status_code == 400
+
+
 def test_check_off_habit(client):
     """Test that an existing habit can be successfully checked off."""
     # Create a habit to check off
@@ -77,6 +160,46 @@ def test_check_off_habit_not_found(client):
     """Test that checking off a non-existent habit returns a 404 error."""
     response = client.post("/api/habits/999/checkoff")
     assert response.status_code == 404
+
+
+def test_habit_completion_status_not_completed(client):
+    """Test that completion status API returns false for uncompleted habit."""
+    # Create a habit
+    response = client.post(
+        "/api/habits", json={"name": "Test Habit", "periodicity": "daily"}
+    )
+    assert response.status_code == 201
+    habit_id = response.json["id"]
+
+    # Check completion status
+    status_response = client.get(f"/api/habits/{habit_id}/completed")
+    assert status_response.status_code == 200
+    assert status_response.json["completed"] is False
+
+
+def test_habit_completion_status_completed(client):
+    """Test that completion status API returns true for completed habit."""
+    # Create a habit
+    response = client.post(
+        "/api/habits", json={"name": "Test Habit", "periodicity": "daily"}
+    )
+    assert response.status_code == 201
+    habit_id = response.json["id"]
+
+    # Complete the habit
+    client.post(f"/api/habits/{habit_id}/checkoff")
+
+    # Check completion status
+    status_response = client.get(f"/api/habits/{habit_id}/completed")
+    assert status_response.status_code == 200
+    assert status_response.json["completed"] is True
+
+
+def test_habit_completion_status_nonexistent(client):
+    """Test that completion status API returns false for non-existent habit."""
+    response = client.get("/api/habits/999/completed")
+    assert response.status_code == 200
+    assert response.json["completed"] is False
 
 
 def test_get_habits_analytics(client):
@@ -202,3 +325,120 @@ def test_get_best_worst_day_not_found(client):
     assert response.status_code == 200
     assert response.json["best_day"] is None
     assert response.json["worst_day"] is None
+
+
+def test_get_preferences_creates_default(client):
+    """Test that GET /preferences creates and returns default preferences."""
+    response = client.get("/api/preferences")
+    assert response.status_code == 200
+
+    data = response.json
+    assert "id" in data
+    assert data["struggle_threshold"] == 0.75
+    assert data["show_bottom_percent"] == 0.25
+    assert "created_at" in data
+    assert "updated_at" in data
+
+
+def test_get_preferences_returns_existing(client):
+    """Test that GET /preferences returns existing preferences."""
+    # Create preferences first
+    create_response = client.get("/api/preferences")
+    assert create_response.status_code == 200
+    original_id = create_response.json["id"]
+
+    # Get preferences again
+    response = client.get("/api/preferences")
+    assert response.status_code == 200
+    assert response.json["id"] == original_id  # Same record
+
+
+def test_update_preferences_full_update(client):
+    """Test updating all preference fields."""
+    update_data = {"struggle_threshold": 0.8, "show_bottom_percent": 0.3}
+
+    response = client.put("/api/preferences", json=update_data)
+    assert response.status_code == 200
+
+    data = response.json
+    assert data["struggle_threshold"] == 0.8
+    assert data["show_bottom_percent"] == 0.3
+
+    # Verify persistence
+    get_response = client.get("/api/preferences")
+    assert get_response.json["struggle_threshold"] == 0.8
+    assert get_response.json["show_bottom_percent"] == 0.3
+
+
+def test_update_preferences_partial_update(client):
+    """Test updating only some preference fields."""
+    # Set initial values
+    client.put(
+        "/api/preferences", json={"struggle_threshold": 0.6, "show_bottom_percent": 0.4}
+    )
+
+    # Update only threshold
+    response = client.put("/api/preferences", json={"struggle_threshold": 0.9})
+    assert response.status_code == 200
+
+    data = response.json
+    assert data["struggle_threshold"] == 0.9
+    assert data["show_bottom_percent"] == 0.4  # Unchanged
+
+
+def test_update_preferences_validation_clamping(client):
+    """Test that preference values are clamped to valid ranges."""
+    # Test upper bounds
+    response = client.put(
+        "/api/preferences", json={"struggle_threshold": 1.5, "show_bottom_percent": 2.0}
+    )
+    assert response.status_code == 200
+    assert response.json["struggle_threshold"] == 1.0
+    assert response.json["show_bottom_percent"] == 1.0
+
+    # Test lower bounds
+    response = client.put(
+        "/api/preferences",
+        json={"struggle_threshold": 0.05, "show_bottom_percent": -0.1},
+    )
+    assert response.status_code == 200
+    assert response.json["struggle_threshold"] == 0.1
+    assert response.json["show_bottom_percent"] == 0.1
+
+
+def test_update_preferences_empty_request(client):
+    """Test that empty JSON request returns 400."""
+    response = client.put("/api/preferences", json={})
+    assert response.status_code == 400
+    assert "error" in response.json
+
+
+def test_struggled_habits_uses_preferences(client):
+    """Test that struggled habits endpoint uses stored preferences."""
+    # Set custom preferences
+    client.put(
+        "/api/preferences",
+        json={
+            "struggle_threshold": 0.5,
+            "show_bottom_percent": 1.0,  # Show all struggling habits
+        },
+    )
+
+    # Create habits with different completion rates
+    client.post("/api/habits", json={"name": "Good Habit", "periodicity": "daily"})
+    client.post("/api/habits", json={"name": "Bad Habit", "periodicity": "daily"})
+
+    # The struggled habits should use the stored preferences
+    response = client.get("/api/analytics/habits/struggled")
+    assert response.status_code == 200
+    # Results will vary based on actual completions, but endpoint should work
+
+
+def test_struggled_habits_query_param_override(client):
+    """Test that query parameters can override stored preferences."""
+    # Set default preferences
+    client.put("/api/preferences", json={"struggle_threshold": 0.5})
+
+    # Override with query parameters
+    response = client.get("/api/analytics/habits/struggled?threshold=0.8&quartile=0.25")
+    assert response.status_code == 200

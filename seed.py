@@ -50,8 +50,21 @@ def seed_database():
         for habit in habits:
             # Refresh the habit object to get its ID
             db.refresh(habit)
-            for i in range(TOTAL_DAYS):
+
+            # Calculate current week boundaries for weekly habits
+            days_since_monday = today.weekday()
+            start_of_week = today - timedelta(days=days_since_monday)
+
+            for i in range(1, TOTAL_DAYS + 1):  # Start from 1 to skip today
                 completion_date = today - timedelta(days=i)
+
+                # Skip current week for weekly habits
+                if (
+                    habit.periodicity == Periodicity.WEEKLY
+                    and completion_date >= start_of_week
+                ):
+                    continue
+
                 # Randomly decide whether to complete the habit on a given day
                 # Daily habits are more likely to be completed
                 if habit.periodicity == Periodicity.DAILY:

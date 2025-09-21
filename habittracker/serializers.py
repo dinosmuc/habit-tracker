@@ -18,3 +18,14 @@ def serialize_completion(completion: models.Completion):
         "completed_at": completion.completed_at.isoformat(),
         "habit_id": completion.habit_id,
     }
+
+
+def serialize_user_preferences(preferences: models.UserPreferences):
+    """Converts a UserPreferences SQLAlchemy object into a python dictionary."""
+    return {
+        "id": preferences.id,
+        "struggle_threshold": preferences.struggle_threshold,
+        "show_bottom_percent": preferences.show_bottom_percent,
+        "created_at": preferences.created_at.isoformat(),
+        "updated_at": preferences.updated_at.isoformat(),
+    }
