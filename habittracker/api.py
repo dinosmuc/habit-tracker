@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 
+from .analytics import AnalyticsService
 from .database import get_db
 from .serializers import serialize_completion, serialize_habit
 from .services import HabitService
@@ -71,3 +72,49 @@ def check_off_habit(habit_id: int):
         return jsonify({"error": "Habit not found"}), 404
 
     return jsonify(serialize_completion(completion)), 201
+
+
+@bp.route("/analytics/habits", methods=["GET"])
+def get_habits_analytics():
+    """Endpoint to get habits analytics with optional periodicity filter."""
+    periodicity = request.args.get("periodicity")
+    db_session = get_db()
+    analytics_service = AnalyticsService(db_session)
+    habits_df = analytics_service.list_habits(periodicity)
+    return jsonify(habits_df.to_dict("records"))
+
+
+@bp.route("/analytics/habits/<int:habit_id>/streaks", methods=["GET"])
+def get_habit_streaks(habit_id: int):
+    """Endpoint to get streak analytics for a specific habit."""
+    db_session = get_db()
+    analytics_service = AnalyticsService(db_session)
+    streaks = analytics_service.calculate_streaks(habit_id)
+    return jsonify(streaks)
+
+
+@bp.route("/analytics/habits/struggled", methods=["GET"])
+def get_struggled_habits():
+    """Endpoint to get habits with lowest completion rates in last 30 days."""
+    db_session = get_db()
+    analytics_service = AnalyticsService(db_session)
+    struggled_df = analytics_service.identify_struggled_habits()
+    return jsonify(struggled_df.to_dict("records"))
+
+
+@bp.route("/analytics/habits/completion-rates", methods=["GET"])
+def get_completion_rates():
+    """Endpoint to get overall completion rates for all habits."""
+    db_session = get_db()
+    analytics_service = AnalyticsService(db_session)
+    rates_df = analytics_service.overall_completion_rate()
+    return jsonify(rates_df.to_dict("records"))
+
+
+@bp.route("/analytics/habits/<int:habit_id>/best-worst-day", methods=["GET"])
+def get_best_worst_day(habit_id: int):
+    """Endpoint to get best and worst performing days for a weekly habit."""
+    db_session = get_db()
+    analytics_service = AnalyticsService(db_session)
+    days = analytics_service.best_and_worst_day(habit_id)
+    return jsonify(days)
