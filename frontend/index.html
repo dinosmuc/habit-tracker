@@ -14,26 +14,80 @@
             <h1>Habit Tracker</h1>
         </header>
 
-        <main>
-            <section class="add-habit">
-                <h2>Add New Habit</h2>
-                <form id="habit-form">
-                    <input type="text" id="habit-name" placeholder="Enter habit name" required>
-                    <select id="habit-periodicity" required>
-                        <option value="">Select frequency</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                    </select>
-                    <button type="submit">Add Habit</button>
-                </form>
-            </section>
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="analytics">Analytics</button>
+        </nav>
 
-            <section class="habits-list">
-                <h2>Your Habits</h2>
-                <div id="habits-container">
-                    <p class="loading">Loading habits...</p>
+        <main>
+            <div id="dashboard" class="tab-content active">
+                <section class="add-habit">
+                    <h2>Add New Habit</h2>
+                    <form id="habit-form">
+                        <input type="text" id="habit-name" placeholder="Enter habit name" required>
+                        <select id="habit-periodicity" required>
+                            <option value="">Select frequency</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                        <button type="submit">Add Habit</button>
+                    </form>
+                </section>
+
+                <section class="habits-list">
+                    <h2>Your Habits</h2>
+                    <div id="habits-container">
+                        <p class="loading">Loading habits...</p>
+                    </div>
+                </section>
+
+                <!-- Edit Modal -->
+                <div id="edit-modal" class="modal">
+                    <div class="modal-content">
+                        <h3>Edit Habit</h3>
+                        <form id="edit-form">
+                            <input type="hidden" id="edit-habit-id">
+                            <input type="text" id="edit-habit-name" placeholder="Habit name" required>
+                            <select id="edit-habit-periodicity" required>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                            <div class="modal-buttons">
+                                <button type="button" id="cancel-edit">Cancel</button>
+                                <button type="submit">Save</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </section>
+            </div>
+
+            <div id="analytics" class="tab-content">
+                <section class="analytics-summary">
+                    <h2>Summary</h2>
+                    <div id="summary-cards"></div>
+                </section>
+
+                <section class="analytics-charts">
+                    <h2>Completion Rates</h2>
+                    <div id="completion-chart"></div>
+                </section>
+
+                <section class="analytics-insights">
+                    <h2>Insights</h2>
+                    <div class="threshold-control">
+                        <div class="control-group">
+                            <label for="threshold-input">Struggle Threshold (%):</label>
+                            <input type="number" id="threshold-input" min="10" max="100" value="75" step="5">
+                        </div>
+                        <div class="control-group">
+                            <label for="quartile-input">Show Bottom (%):</label>
+                            <input type="number" id="quartile-input" min="10" max="100" value="25" step="5">
+                        </div>
+                    </div>
+                    <div id="struggled-habits"></div>
+                    <div id="day-analysis"></div>
+                </section>
+            </div>
         </main>
     </div>
 

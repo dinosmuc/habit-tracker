@@ -95,9 +95,9 @@ class HabitService:
             )
 
         elif periodicity == models.Periodicity.WEEKLY:
-            # Check if completed this week (Monday to Sunday)
-            days_since_monday = target_date.weekday()
-            start_of_week = target_date - datetime.timedelta(days=days_since_monday)
+            # Check if completed this week (Sunday to Saturday)
+            days_since_sunday = (target_date.weekday() + 1) % 7
+            start_of_week = target_date - datetime.timedelta(days=days_since_sunday)
             end_of_week = start_of_week + datetime.timedelta(days=6)
 
             start_of_week_dt = datetime.datetime.combine(
