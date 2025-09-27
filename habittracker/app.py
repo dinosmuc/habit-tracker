@@ -11,7 +11,12 @@ def create_app(db_url="sqlite:///habittracker.db"):
     # Dispose of old connections and create a fresh engine for the given URL.
     if database.engine:
         database.engine.dispose()
-    database.engine = create_engine(db_url, connect_args={"check_same_thread": False})
+    if db_url.startswith("sqlite"):
+        database.engine = create_engine(
+            db_url, connect_args={"check_same_thread": False}
+        )
+    else:
+        database.engine = create_engine(db_url)
 
     # Enable foreign key constraints for SQLite
     @event.listens_for(database.engine, "connect")

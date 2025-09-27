@@ -156,10 +156,20 @@ def test_check_off_habit(client):
     assert checkoff_response.json["habit_id"] == habit_id
 
 
-def test_check_off_habit_not_found(client):
-    """Test that checking off a non-existent habit returns a 404 error."""
-    response = client.post("/api/habits/999/checkoff")
-    assert response.status_code == 404
+def test_check_off_habit_conflict_when_already_completed(client):
+    """Test that checking off the same habit twice in a period returns a conflict."""
+    response = client.post(
+        "/api/habits", json={"name": "Conflict Habit", "periodicity": "daily"}
+    )
+    assert response.status_code == 201
+    habit_id = response.json["id"]
+
+    first_checkoff = client.post(f"/api/habits/{habit_id}/checkoff")
+    assert first_checkoff.status_code == 201
+
+    second_checkoff = client.post(f"/api/habits/{habit_id}/checkoff")
+    assert second_checkoff.status_code == 409
+    assert second_checkoff.json["error"] == "Habit already completed for this period"
 
 
 def test_habit_completion_status_not_completed(client):
