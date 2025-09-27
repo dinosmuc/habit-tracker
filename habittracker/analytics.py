@@ -132,11 +132,19 @@ class AnalyticsService:
         ).fillna({"completed": 0})
         merged["period_days"] = merged["periodicity"].map({"DAILY": 1, "WEEKLY": 7})
         merged["total_days"] = (today - merged["created_at"]).dt.days
-        merged["expected"] = (merged["total_days"] / merged["period_days"]).floordiv(
-            1
-        ) + 1
-        merged["completion_rate"] = (merged["completed"] / merged["expected"]).clip(
-            upper=1.0
+        merged["expected"] = (merged["total_days"] / merged["period_days"]).floordiv(1)
+        # Avoid division by zero: handle expected=0 case properly
+        merged["completion_rate"] = merged.apply(
+            lambda row: (
+                1.0
+                if row["expected"] == 0 and row["completed"] > 0
+                else (
+                    0.0
+                    if row["expected"] == 0
+                    else min(1.0, row["completed"] / row["expected"])
+                )
+            ),
+            axis=1,
         )
         return merged[["id", "name", "completion_rate"]]
 

@@ -132,7 +132,7 @@ class HabitService:
         if not habit:
             return False
 
-        today = datetime.date.today()
+        today = datetime.datetime.now(datetime.timezone.utc).date()
         return self._already_completed_in_period(habit_id, habit.periodicity, today)
 
     def get_user_preferences(self):
