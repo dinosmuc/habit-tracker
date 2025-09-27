@@ -60,7 +60,12 @@ class AnalyticsService:
         streaks = df.groupby("streak_id").size()
         longest = int(streaks.max())
 
-        today = today or pd.Timestamp.utcnow().tz_localize(None).tz_localize(None)
+        if today is None:
+            today = pd.Timestamp.utcnow()
+        if not isinstance(today, pd.Timestamp):
+            today = pd.Timestamp(today)
+        if today.tzinfo is not None and today.tzinfo.utcoffset(today) is not None:
+            today = today.tz_convert(None)
         last_date = df["completed_at"].max()
         current = int(streaks.iloc[-1]) if (today - last_date).days <= period else 0
         return {"longest_streak": longest, "current_streak": current}
