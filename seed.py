@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from habittracker.database import SessionLocal
 from habittracker.models import Completion, Habit, Periodicity
@@ -37,7 +37,7 @@ def seed_database():
             habit = Habit(
                 name=habit_data["name"],
                 periodicity=habit_data["periodicity"],
-                created_at=datetime.utcnow() - timedelta(days=TOTAL_DAYS),
+                created_at=datetime.now(timezone.utc) - timedelta(days=TOTAL_DAYS),
             )
             habits.append(habit)
         db.add_all(habits)
@@ -46,7 +46,7 @@ def seed_database():
 
         # --- Create sample completion data ---
         print(f"Generating {NUM_WEEKS_DATA} weeks of sample completion data...")
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         for habit in habits:
             # Refresh the habit object to get its ID
             db.refresh(habit)

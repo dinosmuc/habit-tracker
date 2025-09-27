@@ -58,13 +58,16 @@ class TestHabitModel:
 
     def test_habit_created_at_default(self, db_session):
         """Test that created_at is set automatically."""
-        before_creation = datetime.datetime.utcnow()
+        before_creation = datetime.datetime.now(datetime.timezone.utc)
         habit = Habit(name="Test Habit", periodicity=Periodicity.WEEKLY)
         db_session.add(habit)
         db_session.commit()
-        after_creation = datetime.datetime.utcnow()
+        after_creation = datetime.datetime.now(datetime.timezone.utc)
 
-        assert before_creation <= habit.created_at <= after_creation
+        # SQLite stores datetimes as naive, compare with naive UTC datetimes
+        before_naive = before_creation.replace(tzinfo=None)
+        after_naive = after_creation.replace(tzinfo=None)
+        assert before_naive <= habit.created_at <= after_naive
 
     def test_habit_relationship_with_completions(self, db_session):
         """Test the relationship between habits and completions."""
@@ -137,13 +140,16 @@ class TestCompletionModel:
         db_session.add(habit)
         db_session.commit()
 
-        before_creation = datetime.datetime.utcnow()
+        before_creation = datetime.datetime.now(datetime.timezone.utc)
         completion = Completion(habit_id=habit.id)
         db_session.add(completion)
         db_session.commit()
-        after_creation = datetime.datetime.utcnow()
+        after_creation = datetime.datetime.now(datetime.timezone.utc)
 
-        assert before_creation <= completion.completed_at <= after_creation
+        # SQLite stores datetimes as naive, compare with naive UTC datetimes
+        before_naive = before_creation.replace(tzinfo=None)
+        after_naive = after_creation.replace(tzinfo=None)
+        assert before_naive <= completion.completed_at <= after_naive
 
     def test_completion_habit_relationship(self, db_session):
         """Test the relationship between completion and habit."""
