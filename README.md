@@ -1,4 +1,4 @@
-# 🎯 Habit Tracker
+# Habit Tracker
 
 A habit tracking application with web interface and REST API.
 
@@ -64,7 +64,7 @@ poetry run flask run
 
 ---
 
-## 📊 Features
+## Features
 
 - Create, update, delete daily/weekly habits
 - Mark habits as complete with duplicate prevention
@@ -72,7 +72,7 @@ poetry run flask run
 - REST API for programmatic access
 - Sample data included for testing
 
-## 🔧 Tech Stack
+## Tech Stack
 
 - **Backend:** Flask, SQLAlchemy, Alembic
 - **Database:** SQLite with foreign key constraints
@@ -80,7 +80,7 @@ poetry run flask run
 - **Testing:** Pytest (94 tests)
 - **Deployment:** Docker
 
-## 🌐 Main API Endpoints
+## Main API Endpoints
 
 - `GET /api/habits` - List all habits
 - `POST /api/habits` - Create new habit
