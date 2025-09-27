@@ -7,7 +7,7 @@ from .serializers import (
     serialize_habit,
     serialize_user_preferences,
 )
-from .services import HabitService
+from .services import HabitAlreadyCompletedError, HabitService
 
 # Create a Blueprint object to organize routes.
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -93,7 +93,13 @@ def check_off_habit(habit_id: int):
     """Endpoint for marking a habit as complete."""
     db_session = get_db()
     habit_service = HabitService(db_session)
-    completion = habit_service.check_off_habit(habit_id)
+    try:
+        completion = habit_service.check_off_habit(habit_id)
+    except HabitAlreadyCompletedError:
+        return (
+            jsonify({"error": "Habit already completed for this period"}),
+            409,
+        )
 
     if not completion:
         return jsonify({"error": "Habit not found"}), 404

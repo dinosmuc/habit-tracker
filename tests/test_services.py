@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from habittracker.models import Completion, Habit, Periodicity, UserPreferences
-from habittracker.services import HabitService
+from habittracker.services import HabitAlreadyCompletedError, HabitService
 
 
 class TestHabitService:
@@ -187,10 +187,11 @@ class TestHabitService:
         assert completion1 is not None
 
         # Subsequent completions same day should be prevented
-        completion2 = service.check_off_habit(habit.id)
-        completion3 = service.check_off_habit(habit.id)
-        assert completion2 is None
-        assert completion3 is None
+        with pytest.raises(HabitAlreadyCompletedError):
+            service.check_off_habit(habit.id)
+
+        with pytest.raises(HabitAlreadyCompletedError):
+            service.check_off_habit(habit.id)
 
         # Verify only one completion exists
         completions = (
@@ -442,8 +443,8 @@ class TestHabitServiceIntegration:
         assert completion1 is not None
 
         # Check it off again same day (should fail)
-        completion2 = service.check_off_habit(habit.id)
-        assert completion2 is None
+        with pytest.raises(HabitAlreadyCompletedError):
+            service.check_off_habit(habit.id)
 
         # Verify it appears in all habits
         all_habits = service.get_all_habits()
@@ -476,7 +477,8 @@ class TestHabitServiceIntegration:
 
         # Check off different habits
         service.check_off_habit(habit1.id)
-        service.check_off_habit(habit1.id)  # Exercise twice
+        with pytest.raises(HabitAlreadyCompletedError):
+            service.check_off_habit(habit1.id)  # Exercise twice
         service.check_off_habit(habit2.id)  # Read once
         # Don't check off meditate
 

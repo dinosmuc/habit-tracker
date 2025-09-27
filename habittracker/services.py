@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session
 from . import models
 
 
+class HabitAlreadyCompletedError(Exception):
+    """Raised when a habit has already been completed in the current period."""
+
+
 class HabitService:
     """Manages business logic for habits and completions."""
 
@@ -67,7 +71,9 @@ class HabitService:
 
         # Check if already completed in the current period
         if self._already_completed_in_period(habit_id, habit.periodicity, today):
-            return None
+            raise HabitAlreadyCompletedError(
+                "Habit has already been completed for the current period."
+            )
 
         new_completion = models.Completion(habit_id=habit_id)
         self.db.add(new_completion)
