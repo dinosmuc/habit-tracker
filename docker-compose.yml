@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  habit-tracker:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    # No volumes = fresh data every restart (as requested)
+    container_name: habit-tracker-dev
+
+# Optional: for production-like testing
+  habit-tracker-prod:
+    image: dinosmuc/habit-tracker:latest
+    ports:
+      - "5001:5000"
+    environment:
+      - FLASK_ENV=production
+    container_name: habit-tracker-prod
+    profiles:
+      - prod

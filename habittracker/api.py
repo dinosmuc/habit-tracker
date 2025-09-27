@@ -42,6 +42,10 @@ def create_habit():
     if not data or "name" not in data or "periodicity" not in data:
         return jsonify({"error": "Missing name or periodicity"}), 400
 
+    # Validate name is not empty or just whitespace
+    if not data["name"] or not data["name"].strip():
+        return jsonify({"error": "Habit name cannot be empty"}), 400
+
     db_session = get_db()
     habit_service = HabitService(db_session)
 
@@ -58,6 +62,10 @@ def update_habit(habit_id: int):
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
+
+    # Validate name is not empty if provided
+    if "name" in data and (not data["name"] or not data["name"].strip()):
+        return jsonify({"error": "Habit name cannot be empty"}), 400
 
     db_session = get_db()
     habit_service = HabitService(db_session)

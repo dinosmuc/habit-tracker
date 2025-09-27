@@ -280,10 +280,10 @@ class TestHabitService:
         db_session.add(habit)
         db_session.commit()
 
-        # Add completion for today
-        from datetime import date, datetime
+        # Add completion for today (using UTC date to match service logic)
+        from datetime import datetime, timezone
 
-        today = date.today()
+        today = datetime.now(timezone.utc).date()
         completion = Completion(
             habit_id=habit.id, completed_at=datetime.combine(today, datetime.min.time())
         )
