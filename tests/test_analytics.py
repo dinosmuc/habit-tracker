@@ -40,6 +40,24 @@ class TestAnalyticsService:
         assert result["longest_streak"] == 2
         assert result["current_streak"] == 1
 
+    def test_calculate_streaks_default_today_handles_timezone(self, db_session):
+        habit = Habit(name="Journal", periodicity=Periodicity.DAILY)
+        db_session.add(habit)
+        db_session.commit()
+
+        completions = [
+            Completion(habit_id=habit.id, completed_at=pd.Timestamp("2024-01-01")),
+            Completion(habit_id=habit.id, completed_at=pd.Timestamp("2024-01-02")),
+        ]
+        db_session.add_all(completions)
+        db_session.commit()
+
+        service = AnalyticsService(db_session)
+        result = service.calculate_streaks(habit.id)
+
+        assert result["longest_streak"] == 2
+        assert "current_streak" in result
+
     def test_identify_struggled_habits(self, db_session):
         h1 = Habit(
             name="H1",
