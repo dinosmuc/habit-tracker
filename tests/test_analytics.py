@@ -117,8 +117,10 @@ class TestAnalyticsService:
         df = service.overall_completion_rate(today=today)
         rate_h1 = df.loc[df["name"] == "H1", "completion_rate"].iloc[0]
         rate_h2 = df.loc[df["name"] == "H2", "completion_rate"].iloc[0]
-        assert rate_h1 == pytest.approx(0.2, rel=1e-3)
-        assert rate_h2 == pytest.approx(2 / 6, rel=1e-3)
+        assert rate_h1 == pytest.approx(2 / 9, rel=1e-3)  # 2 completions in 9 days
+        assert rate_h2 == pytest.approx(
+            2 / 5, rel=1e-3
+        )  # 2 completions in 5 weeks (40//7=5)
 
     def test_best_and_worst_day(self, db_session):
         habit = Habit(name="Weekly", periodicity=Periodicity.WEEKLY)
