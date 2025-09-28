@@ -58,6 +58,10 @@ def seed_database():
             for i in range(1, TOTAL_DAYS + 1):  # Start from 1 to skip today
                 completion_date = today - timedelta(days=i)
 
+                # Ensure we never create completions for today
+                if completion_date >= today:
+                    continue
+
                 # Skip current week for weekly habits
                 if (
                     habit.periodicity == Periodicity.WEEKLY
