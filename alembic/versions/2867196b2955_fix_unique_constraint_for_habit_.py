@@ -24,6 +24,18 @@ def upgrade() -> None:
     # Drop the existing non-unique index
     op.drop_index("ix_completions_habit_date", table_name="completions")
 
+    # Clean up any existing duplicate completions before enforcing uniqueness
+    op.execute(
+        """
+        DELETE FROM completions
+        WHERE rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM completions
+            GROUP BY habit_id, DATE(completed_at)
+        )
+    """
+    )
+
     # Create a UNIQUE index to prevent duplicate completions per habit per day
     # This enforces uniqueness at the database level
     op.create_index(

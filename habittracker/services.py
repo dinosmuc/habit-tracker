@@ -77,9 +77,18 @@ class HabitService:
 
         new_completion = models.Completion(habit_id=habit_id)
         self.db.add(new_completion)
-        self.db.commit()
-        self.db.refresh(new_completion)
-        return new_completion
+        try:
+            self.db.commit()
+            self.db.refresh(new_completion)
+            return new_completion
+        except Exception as e:
+            self.db.rollback()
+            # If unique constraint violation, treat as already completed
+            if "UNIQUE constraint failed" in str(e):
+                raise HabitAlreadyCompletedError(
+                    "Habit has already been completed for the current period."
+                )
+            raise  # Re-raise other database errors
 
     def _already_completed_in_period(
         self, habit_id: int, periodicity: models.Periodicity, target_date: datetime.date
