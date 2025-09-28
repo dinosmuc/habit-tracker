@@ -55,7 +55,17 @@ class AnalyticsService:
             return {"longest_streak": 0, "current_streak": 0}
 
         df = df.sort_values("completed_at")
-        df["gap"] = df["completed_at"].diff().dt.days.fillna(0).gt(period)
+
+        if habit.periodicity == models.Periodicity.WEEKLY:
+            # For weekly habits, check if completions are in consecutive ISO weeks
+            df["iso_week"] = df["completed_at"].dt.isocalendar().week
+            df["iso_year"] = df["completed_at"].dt.isocalendar().year
+            df["week_key"] = df["iso_year"] * 100 + df["iso_week"]
+            df["gap"] = df["week_key"].diff().fillna(0).gt(1)
+        else:
+            # For daily habits, use day-based gap detection
+            df["gap"] = df["completed_at"].diff().dt.days.fillna(0).gt(period)
+
         df["streak_id"] = df["gap"].cumsum()
         streaks = df.groupby("streak_id").size()
         longest = int(streaks.max())
@@ -67,7 +77,23 @@ class AnalyticsService:
         if today.tzinfo is not None and today.tzinfo.utcoffset(today) is not None:
             today = today.tz_convert(None)
         last_date = df["completed_at"].max()
-        current = int(streaks.iloc[-1]) if (today - last_date).days <= period else 0
+
+        if habit.periodicity == models.Periodicity.WEEKLY:
+            # For weekly habits, current streak is valid if last completion was
+            # this week or last week
+            last_completion_week = pd.Timestamp(last_date).isocalendar().week
+            last_completion_year = pd.Timestamp(last_date).isocalendar().year
+            current_week = today.isocalendar().week
+            current_year = today.isocalendar().year
+
+            week_diff = (current_year - last_completion_year) * 52 + (
+                current_week - last_completion_week
+            )
+            current = int(streaks.iloc[-1]) if week_diff <= 1 else 0
+        else:
+            # For daily habits, use day-based check
+            current = int(streaks.iloc[-1]) if (today - last_date).days <= period else 0
+
         return {"longest_streak": longest, "current_streak": current}
 
     def identify_struggled_habits(
