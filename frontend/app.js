@@ -359,7 +359,7 @@ class HabitTracker {
 
     async loadDayAnalysis() {
         try {
-            const weeklyHabits = this.habits.filter(h => h.periodicity === 'WEEKLY');
+            const weeklyHabits = this.habits.filter(h => h.periodicity === 'weekly');
             if (weeklyHabits.length === 0) {
                 document.getElementById('day-analysis').innerHTML = '<div class="insights-section"><h3>Day Analysis</h3><p>No weekly habits found</p></div>';
                 return;
