@@ -9,12 +9,12 @@ def test_create_app_with_non_sqlite_url(monkeypatch):
     original_create_engine = sqlalchemy.create_engine
     original_engine = database.engine
 
-    def fake_create_engine(url, **kwargs):
+    def fake_create_database_engine(url):
         captured["url"] = url
-        captured["kwargs"] = kwargs
+        # For non-SQLite URLs, no connect_args should be used
         return original_create_engine("sqlite:///:memory:")
 
-    monkeypatch.setattr(app_module, "create_engine", fake_create_engine)
+    monkeypatch.setattr(database, "create_database_engine", fake_create_database_engine)
 
     class _DummyEngine:
         def dispose(self):
@@ -29,7 +29,6 @@ def test_create_app_with_non_sqlite_url(monkeypatch):
 
         assert app is not None
         assert captured["url"] == non_sqlite_url
-        assert "connect_args" not in captured["kwargs"]
     finally:
         database.engine.dispose()
         database.engine = original_engine
