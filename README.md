@@ -15,6 +15,7 @@ docker run -p 5000:5000 dinosmuc/habit-tracker:latest
 ✅ Automatic database setup and sample data
 ✅ Fresh start every time
 ✅ No configuration needed
+✅ Includes simple web UI for habit management
 
 ---
 
@@ -38,7 +39,7 @@ docker-compose up
 
 ## 💻 Local Development (Without Docker)
 
-**Prerequisites:** Python 3.10+
+**Prerequisites:** Python 3.10 or 3.11
 
 ```bash
 # Clone and setup
@@ -73,6 +74,11 @@ poetry run flask --app habittracker.app:create_app run
   - Best and worst day analysis for weekly habits
 - REST API for programmatic access and integration
 - Simple web interface for easy interaction
+- Web Interface:
+  - View all habits with real-time completion status
+  - Add, edit, and delete habits
+  - One-click habit check-off
+  - Visual analytics dashboard
 - Sample data generation included for quick testing and demonstration
 
 ## Tech Stack
@@ -81,9 +87,9 @@ poetry run flask --app habittracker.app:create_app run
 - **Database:** SQLite (with enforced foreign key constraints)
 - **Analytics:** Pandas
 - **Testing:** Pytest (94 tests covering models, services, API, and analytics)
-- **Frontend:** HTML, CSS, JavaScript (Vanilla)
+- **Frontend:** HTML, CSS, JavaScript (Vanilla) - served by Flask
 - **Deployment:** Docker, Docker Compose
-- **CI/CD:** GitHub Actions (linting, formatting, testing)
+- **CI/CD:** GitHub Actions (Python 3.11, linting with Ruff & Black, 94 tests with Pytest)
 
 ## Testing 🧪
 
