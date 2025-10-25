@@ -49,13 +49,13 @@ cd habit-tracker
 pip install flask sqlalchemy alembic pandas python-dotenv pytest
 python -m alembic upgrade head
 python seed.py
-flask run
+flask --app habittracker.app:create_app run
 
 # Option 2: With Poetry
 poetry install
 poetry run alembic upgrade head
 poetry run python seed.py
-poetry run flask run
+poetry run flask --app habittracker.app:create_app run
 ```
 
 **Visit:** http://localhost:5000
