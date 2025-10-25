@@ -48,8 +48,8 @@ cd habit-tracker
 
 # Option 1: With pip (no Poetry required)
 pip install flask sqlalchemy alembic pandas python-dotenv pytest
-python -m alembic upgrade head
-python seed.py
+python3 -m alembic upgrade head
+python3 seed.py
 flask --app habittracker.app:create_app run
 
 # Option 2: With Poetry
