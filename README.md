@@ -46,7 +46,9 @@ docker-compose up
 git clone https://github.com/dinosmuc/habit-tracker.git
 cd habit-tracker
 
-# Option 1: With pip (no Poetry required)
+## Linux
+
+# Option 1: With pip (no Poetry required) 
 pip install flask sqlalchemy alembic pandas python-dotenv pytest
 python3 -m alembic upgrade head
 python3 seed.py
@@ -57,6 +59,21 @@ poetry install
 poetry run alembic upgrade head
 poetry run python seed.py
 poetry run flask --app habittracker.app:create_app run
+
+## Windows
+
+# Option 1: With pip (no Poetry requred)
+pip install flask sqlalchemy alembic pandas python-dotenv pytest
+python -m alembic upgrade head
+python seed.py
+flask --app habittracker.app:create_app run
+
+# Option 2: With Poetry
+poetry install
+poetry run alembic upgrade head
+poetry run python seed.py
+poetry run flask --app habittracker.app:create_app run
+
 ```
 
 **Visit:** http://localhost:5000
