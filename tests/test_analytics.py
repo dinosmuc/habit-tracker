@@ -140,7 +140,22 @@ class TestAnalyticsService:
         service = AnalyticsService(db_session)
         res = service.best_and_worst_day(habit.id)
         assert res["best_day"] == "Wednesday"
-        assert res["worst_day"] == "Tuesday"
+        assert res["worst_day"] == "Monday"
+
+    def test_best_and_worst_day_no_clear_worst(self, db_session):
+        habit = Habit(name="Weekly", periodicity=Periodicity.WEEKLY)
+        db_session.add(habit)
+        db_session.commit()
+
+        db_session.add(
+            Completion(habit_id=habit.id, completed_at=pd.Timestamp("2024-01-06"))
+        )
+        db_session.commit()
+
+        service = AnalyticsService(db_session)
+        res = service.best_and_worst_day(habit.id)
+        assert res["best_day"] == "Saturday"
+        assert res["worst_day"] == "N/A"
 
     def test_identify_struggled_habits_custom_threshold(self, db_session):
         """Test struggled habits with custom threshold parameter."""

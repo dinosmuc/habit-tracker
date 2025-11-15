@@ -216,4 +216,19 @@ class AnalyticsService:
                 fill_value=0,
             )
         )
-        return {"best_day": counts.idxmax(), "worst_day": counts.idxmin()}
+
+        best_day = counts.idxmax()
+
+        # Only consider days we've actually observed completions on when
+        # determining the worst day. If a habit has only been completed on a
+        # single weekday, there's no meaningful "worst" day yet.
+        observed_days = counts[counts > 0]
+        worst_day = "N/A"
+
+        if observed_days.shape[0] > 1:
+            min_count = observed_days.min()
+            lowest_days = observed_days[observed_days == min_count]
+            if lowest_days.shape[0] == 1:
+                worst_day = lowest_days.index[0]
+
+        return {"best_day": best_day, "worst_day": worst_day}
